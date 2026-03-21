@@ -1,0 +1,48 @@
+name: SignalMesh Bot — 24/7
+
+# How this works (free forever):
+# - GitHub Actions gives unlimited free minutes on public repos
+# - Each job can run for up to 6 hours max
+# - We schedule a new job every 50 minutes so there's always one running
+# - The bot restarts with ~30 second overlap to avoid any gaps
+# - BOT_TOKEN stored as a GitHub Secret — never in your code
+
+on:
+  schedule:
+    # Run every 50 minutes, 24/7
+    # GitHub cron syntax: minute hour day month weekday
+    - cron: '0/50 * * * *'
+
+  # Also allows manual start from GitHub Actions tab
+  workflow_dispatch:
+
+jobs:
+  run-bot:
+    name: Run @SignalMeshBot
+    runs-on: ubuntu-latest
+    timeout-minutes: 55  # slightly over 50 so jobs overlap, no gaps
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run bot for 50 minutes
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          SIGNALMESH_API_KEY: ${{ secrets.SIGNALMESH_API_KEY }}
+          SIGNALMESH_API_URL: ${{ secrets.SIGNALMESH_API_URL }}
+        run: |
+          echo "Starting @SignalMeshBot..."
+          # Run bot with a 50 minute timeout (2950 seconds)
+          # The next scheduled job starts before this one ends = zero downtime
+          timeout 2950 python bot.py || true
+          echo "Bot run complete — next job takes over shortly"
