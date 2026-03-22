@@ -1,0 +1,1 @@
+# SignalMesh AutoTrader module

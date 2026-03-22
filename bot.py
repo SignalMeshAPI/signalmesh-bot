@@ -14,12 +14,26 @@ import random
 from datetime import datetime, timezone
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, MessageHandler, ConversationHandler, ContextTypes, filters
+from app.trader import wallet as wallet_mod
+from app.trader.autotrader import AutoTrader
+from app.trader.positions import get_user_positions
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
+HELIUS_KEY = os.getenv("HELIUS_API_KEY", "")
+
+# Global autotrader instance (set in main())
+autotrader_instance = None
+
+async def _notify_user(bot_app, user_id: int, message: str):
+    """Send a Telegram message to a user"""
+    try:
+        await bot_app.bot.send_message(chat_id=user_id, text=message, parse_mode="Markdown")
+    except Exception as e:
+        logger.error(f"Notify error for {user_id}: {e}")
 COINCAP_BASE = "https://api.coincap.io/v2"
 COINGECKO_BASE = "https://api.coingecko.com/api/v3"
 RUGCHECK_BASE = "https://api.rugcheck.xyz/v1"
@@ -503,6 +517,55 @@ async def subscribe_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
 
 
+async def menu_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Full command menu"""
+    await update.message.reply_text(
+        "📋 *SignalMesh Command Menu*
+
+"
+        "*📊 Signals & Research*
+"
+        "`/signal BONK` — Full agent signal
+"
+        "`/price SOL` — Live price
+"
+        "`/safety BONK` — 9-point safety check
+"
+        "`/whales solana` — Smart money wallets
+"
+        "`/launch` — New token launches
+"
+        "`/alpha` — Top 3 opportunities now
+
+"
+        "*🤖 AutoTrader*
+"
+        "`/connect` — Link Phantom wallet
+"
+        "`/wallet` — View wallet + settings
+"
+        "`/autotrade on/off` — Enable/pause bot
+"
+        "`/trade BONK` — Manual trade entry
+"
+        "`/positions` — Open + closed positions
+"
+        "`/settings sol 0.1` — Update parameters
+"
+        "`/disconnect` — Remove wallet
+
+"
+        "*ℹ️ Info*
+"
+        "`/chains` — Supported chains
+"
+        "`/subscribe` — Pricing
+"
+        "`/menu` — This menu",
+        parse_mode="Markdown"
+    )
+
+
 async def chains_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (
         "🔗 *Supported Chains*\n\n"
@@ -526,6 +589,7 @@ def main():
 
     app = Application.builder().token(BOT_TOKEN).build()
 
+    # Signal & research commands
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("signal", signal_cmd))
     app.add_handler(CommandHandler("price", price_cmd))
@@ -535,8 +599,58 @@ def main():
     app.add_handler(CommandHandler("alpha", alpha_cmd))
     app.add_handler(CommandHandler("subscribe", subscribe_cmd))
     app.add_handler(CommandHandler("chains", chains_cmd))
+    app.add_handler(CommandHandler("menu", menu_cmd))
 
-    logger.info("🚀 SignalMesh Bot v0.2.0 starting...")
+    # AutoTrader commands — /connect uses ConversationHandler for key intake
+    from app.handlers.trading import (
+        connect_start, connect_receive_key, connect_cancel,
+        wallet_cmd, autotrade_cmd, trade_cmd, positions_cmd,
+        settings_cmd, disconnect_cmd, init as trading_init
+    )
+
+    # Wire up the autotrader
+    import functools
+    async def _notify(user_id, msg):
+        try:
+            await app.bot.send_message(chat_id=user_id, text=msg, parse_mode="Markdown")
+        except Exception as e:
+            logger.error(f"Notify error: {e}")
+
+    global autotrader_instance
+    autotrader_instance = AutoTrader(app, _notify)
+
+    trading_init(
+        wallet_module=wallet_mod,
+        autotrader=autotrader_instance,
+        signal_fn=generate_signal,
+        price_fn=get_real_price,
+        safety_fn=compute_safety_score,
+    )
+
+    # Wallet connect conversation
+    conv = ConversationHandler(
+        entry_points=[CommandHandler("connect", connect_start)],
+        states={1: [MessageHandler(filters.TEXT & ~filters.COMMAND, connect_receive_key)]},
+        fallbacks=[CommandHandler("cancel", connect_cancel)],
+        allow_reentry=True,
+    )
+    app.add_handler(conv)
+
+    app.add_handler(CommandHandler("wallet", wallet_cmd))
+    app.add_handler(CommandHandler("autotrade", autotrade_cmd))
+    app.add_handler(CommandHandler("trade", trade_cmd))
+    app.add_handler(CommandHandler("positions", positions_cmd))
+    app.add_handler(CommandHandler("settings", settings_cmd))
+    app.add_handler(CommandHandler("disconnect", disconnect_cmd))
+
+    # Start autotrader background tasks
+    async def post_init(application):
+        autotrader_instance.start()
+        logger.info("AutoTrader background tasks started")
+
+    app.post_init = post_init
+
+    logger.info("🚀 SignalMesh Bot v0.3.0 starting with AutoTrader...")
     app.run_polling(drop_pending_updates=True)
 
 
