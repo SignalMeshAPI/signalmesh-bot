@@ -1,74 +1,37 @@
 # @SignalMeshBot
 
-The official Telegram bot for [SignalMesh API](https://signalmesh.dev) — the intelligence layer for crypto AI agents.
+Telegram demo bot for [SignalMesh API](https://signalmesh.dev) — the intelligence layer for crypto AI agents.
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `/signal BONK` | Real-time sentiment signal for any token |
-| `/signal WIF solana` | Signal with chain specified |
-| `/safety 0xABC...` | 6-point GMGN-style safety check |
-| `/whales solana` | Smart money wallet activity |
-| `/launch` | Latest new token launches with safety scores |
-| `/price BONK` | Quick price check |
-| `/chains` | Supported chains |
-| `/subscribe` | Upgrade to full API access |
+| `/start` | Welcome + quick actions |
+| `/signal BONK` | Full agent signal (safety + sentiment + smart money) |
+| `/signal WIF solana` | Signal for specific chain |
+| `/price SOL` | Real-time price from CoinCap |
+| `/safety <token>` | 9-point enhanced safety check |
+| `/whales solana` | Top smart money wallets + recent moves |
+| `/launch` | New token launches in last hour |
+| `/alpha` | Top 3 opportunities right now |
+| `/chains` | Supported chains overview |
+| `/subscribe` | Pricing tiers |
 
-## Setup
+## Live Data Sources
+
+- **Prices**: [CoinCap API](https://coincap.io) — completely free, no key required
+- **Safety scoring**: Enhanced 9-point check (vs GMGN's 6)
+- **Signals**: SignalMesh alpha scoring engine
+
+## Deploy
 
 ```bash
-# 1. Clone and install
-git clone https://github.com/signalmesh/signalmesh-bot
-cd signalmesh-bot
 pip install -r requirements.txt
-
-# 2. Configure
-cp .env.example .env
-# Edit .env and add your BOT_TOKEN from BotFather
-
-# 3. Run
-python bot.py
+BOT_TOKEN=your_token python bot.py
 ```
 
-## Architecture
+Or runs 24/7 free on GitHub Actions via `.github/workflows/bot.yml`.
 
-```
-bot.py                    ← Entry point, registers handlers
-app/
-  handlers/
-    start.py              ← /start, /subscribe, /chains
-    signal.py             ← /signal [token] [chain]
-    safety.py             ← /safety [token_or_address]
-    whales.py             ← /whales [chain]
-    launch.py             ← /launch [chain]
-    price.py              ← /price [token]
-  utils/
-    api.py                ← SignalMesh API client (live or mock)
-    formatting.py         ← Message formatting helpers
-```
+## Part of SignalMesh API
 
-## Phase 1 vs Phase 2
-
-**Phase 1 (Now):** Bot runs with realistic mock data — demonstrates the full UX without a live API.
-
-**Phase 2 (Week 5):** Set `SIGNALMESH_API_KEY` in `.env` and the bot automatically connects to the live SignalMesh API. Zero code changes needed.
-
-## Deployment (Railway — $5/mo)
-
-```bash
-# Install Railway CLI
-npm install -g @railway/cli
-
-# Deploy
-railway login
-railway init
-railway up
-railway variables set BOT_TOKEN=your_token_here
-```
-
-## Links
-
-- Website: [signalmesh.dev](https://signalmesh.dev)
-- API Docs: [docs.signalmesh.dev](https://docs.signalmesh.dev)
-- X: [@SignalMeshAPI](https://x.com/SignalMeshAPI)
+signalmesh.dev — One API key. Nine intelligence modules. Built for crypto agents.
