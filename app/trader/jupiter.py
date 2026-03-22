@@ -35,6 +35,9 @@ MINT_MAP = {
     "SAMO":     "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
     "FARTCOIN": "9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump",
     "JUP":      "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN",
+    "LOBSTAR":  "AVF9F4C4j8b1Kh4BmNHqybDaHgnZpJ7W7yLvL7hUpump",
+    "CLAW":     "DtR4D9FtVoTX2569gaL837ZgrB6wDRunn86hMRKgjJGy",  # OpenClaw narrative token
+    "PENGU":    "2zMMhcVQEXDtdE6vsFS7S7D5oUodfJHE8vd1gnBouauv",
     "PENGU":    "2zMMhcVQEXDtdE6vsFS7S7D5oUodfJHE8vd1gnBouauv",
 }
 

@@ -29,7 +29,7 @@ DEFAULT_TP_PCT        = 50
 DEFAULT_SL_PCT        = 30
 
 # Tokens supported for auto-trading (have known mints)
-TRADEABLE = {"BONK","WIF","POPCAT","MEW","BOME","SAMO","FARTCOIN","JUP"}
+TRADEABLE = {"BONK","WIF","POPCAT","MEW","BOME","SAMO","FARTCOIN","JUP","LOBSTAR","CLAW"}
 
 
 def keypair_from_bytes(key_bytes: bytes) -> Optional[Keypair]:

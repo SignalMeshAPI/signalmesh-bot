@@ -160,8 +160,28 @@ def compute_safety_score(symbol: str, price_data: dict | None) -> dict:
 
 NARRATIVES = [
     "celebrity_meme", "political_token", "ai_agent", "animal_meme",
-    "viral_x_post", "cto_migration", "kol_endorsed", "ecosystem_token"
+    "viral_x_post", "cto_migration", "kol_endorsed", "ecosystem_token",
+    "ai_agent_experiment",   # Lobstar/GOAT pattern — dev builds AI agent with public wallet
+    "instagram_viral",       # Non-crypto platform virality — highest retail inflow signal  
+    "developer_experiment",  # Credentialed tech dev (OpenAI/Google/Anthropic) launches token
+    "drama_pump",            # Controversy/mistake goes viral — drama = free marketing
 ]
+
+# High-alpha narrative categories that get a sentiment boost
+HIGH_ALPHA_NARRATIVES = {
+    "ai_agent_experiment", "instagram_viral", "developer_experiment", "drama_pump"
+}
+
+# Known AI agent / developer experiment tokens to watch
+AI_AGENT_TOKENS = {
+    "LOBSTAR": "AVF9F4C4j8b1Kh4BmNHqybDaHgnZpJ7W7yLvL7hUpump",  # Lobstar Wilde — OpenAI dev
+    "CLAW":    "DtR4D9FtVoTX2569gaL837ZgrB6wDRunn86hMRKgjJGy",   # OpenClaw narrative
+}
+
+# X community IDs to monitor for narrative strength
+X_COMMUNITIES = {
+    "lobstar": "2035717789378322810",  # Lobstar community — check post velocity + likes
+}
 
 def generate_signal(symbol: str, price_data: dict | None, safety: dict) -> dict:
     """Generate a full agent-ready signal from available data"""
@@ -195,6 +215,10 @@ def generate_signal(symbol: str, price_data: dict | None, safety: dict) -> dict:
     confidence = round(alpha_score, 2)
 
     narrative = random.choice(NARRATIVES)
+    
+    # High-alpha narratives get sentiment boost — Instagram/developer/AI agent patterns
+    if narrative in HIGH_ALPHA_NARRATIVES:
+        sentiment = min(0.99, sentiment + 0.15)
     sm_status = "accumulating" if wallets_in >= 3 else ("watching" if wallets_in >= 1 else "absent")
 
     # Generate agent_summary
@@ -566,6 +590,32 @@ async def menu_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+async def lobstar_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Deep dive on the Lobstar signal — case study for what to watch"""
+    text = (
+        "🦞 *Lobstar (LOBSTAR) — AI Agent Signal Case Study*\n\n"
+        "Token: `AVF9F4C4j8b1Kh4BmNHqybDaHgnZpJ7W7yLvL7hUpump`\n"
+        "Creator: Nik Pash (OpenAI Codex) via OpenClaw framework\n\n"
+        "*What happened:*\n"
+        "• Day 0: AI agent launched with $50K SOL wallet\n"
+        "• Day 3: Agent accidentally sends $441K to random user\n"
+        "• 3h later: $900K → $17M mcap (+1,789%)\n"
+        "• Crash: $15M → $1.5M (recipient dumps)\n"
+        "• Recovery: $1.5M → $14M (smart money buys dip)\n"
+        "• Instagram viral post keeps narrative alive\n\n"
+        "*Signal pattern (encode into scanner):*\n"
+        "1️⃣ Credentialed dev (OpenAI) = narrative credibility\n"
+        "2️⃣ AI agent public experiment = ongoing story\n"
+        "3️⃣ Instagram/non-crypto viral = retail inflow signal\n"
+        "4️⃣ Smart money convergence on crash = re-entry signal\n"
+        "5️⃣ X community active (10+ likes fresh posts) = sustained\n\n"
+        "*Current status:* Live, watch for re-accumulation signals\n"
+        "*X community:* x.com/i/communities/2035717789378322810\n\n"
+        "_SignalMesh: `/signal LOBSTAR` to get current alpha score_"
+    )
+    await update.message.reply_text(text, parse_mode="Markdown")
+
+
 async def chains_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (
         "🔗 *Supported Chains*\n\n"
@@ -600,6 +650,7 @@ def main():
     app.add_handler(CommandHandler("subscribe", subscribe_cmd))
     app.add_handler(CommandHandler("chains", chains_cmd))
     app.add_handler(CommandHandler("menu", menu_cmd))
+    app.add_handler(CommandHandler("lobstar", lobstar_cmd))
 
     # AutoTrader commands — /connect uses ConversationHandler for key intake
     from app.handlers.trading import (
